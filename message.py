@@ -19,6 +19,6 @@ def send_message(bot, message):
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     try:
         bot.send_message(chat_id, message)
-        logging.debug('Успешная отправка сообщения в Telegram')
+        logger.debug('Успешная отправка сообщения в Telegram')
     except telegram.error.TelegramError as error:
-        logging.error(f'Ошибка при отправке сообщения в Telegram: {error}')
+        logger.error(f'Ошибка при отправке сообщения в Telegram: {error}')
