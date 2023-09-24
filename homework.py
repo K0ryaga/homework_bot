@@ -1,26 +1,39 @@
 import os
-import requests
 import time
 import telegram
-import logging
 import sys
+import logging
 from dotenv import load_dotenv
+
+
+from api import check_response, get_api_answer
+from status_parser import parse_status, HOMEWORK_VERDICTS
+from message import send_message
+
 
 load_dotenv()
 
-PRACTICUM_TOKEN = 'y0_AgAAAABVwHD5AAYckQAAAADsoTDLIizCyOBVR1Clmgnoobd-L6Ny0To'
-TELEGRAM_TOKEN = '5994529498:AAEFf8IuLiAIRqdUnNX_sLE0UKYdsIUZ8Oo'
-TELEGRAM_CHAT_ID = '667715050'
+PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 RETRY_PERIOD = 600
-ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
+API_HOST = 'https://practicum.yandex.ru/api/user_api/'
+ENDPOINT = 'homework_statuses/'
+url = f'{API_HOST}{ENDPOINT}'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
-HOMEWORK_VERDICTS = {
-    'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
-    'reviewing': 'Работа взята на проверку ревьюером.',
-    'rejected': 'Работа проверена: у ревьюера есть замечания.'
-}
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler('bot.log')
+file_handler.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
 
 
 def check_tokens():
@@ -40,92 +53,19 @@ def check_tokens():
         missing_variables_str = ', '.join(missing_variables)
         error_message = (
             f"Отсутствуют следующие переменные окружения: "
-            f"{missing_variables_str}")
+            f"{missing_variables_str}"
+        )
         raise ValueError(error_message)
 
-
-def send_message(bot, message):
-    """Отправляет сообщение в Telegram чат."""
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    if not chat_id:
+    if not os.getenv('TELEGRAM_CHAT_ID'):
         raise ValueError(
             "Переменная окружения TELEGRAM_CHAT_ID не установлена.")
 
-    try:
-        bot.send_message(chat_id, message)
-        logging.debug('Успешная отправка сообщения в Telegram')
-    except telegram.error.TelegramError as error:
-        logging.error(f'Ошибка при отправке сообщения в Telegram: {error}')
-
-
-def get_api_answer(timestamp):
-    """Делает запрос к API-сервису и возвращает ответ."""
-    url = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
-    headers = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
-    params = {'from_date': timestamp}
-
-    try:
-        response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()
-        if response.status_code != 200:
-            raise ValueError(
-                f"Ошибка при запросе к API: {response.status_code}")
-        return response.json()
-    except requests.RequestException as error:
-        raise ValueError(f"Ошибка при запросе к API: {error}")
-
-
-def check_response(response):
-    """Проверяет ответ API на соответствие документации."""
-    if not isinstance(response, dict):
-        raise TypeError("Ожидается словарь в качестве ответа API.")
-
-    if "homeworks" not in response:
-        raise KeyError("Отсутствует ключ 'homeworks' в ответе API.")
-
-    homeworks = response["homeworks"]
-    if not isinstance(homeworks, list):
-        raise TypeError(
-            "Ожидается список в качестве значения ключа 'homeworks'.")
-
-    for homework in homeworks:
-        if not isinstance(homework, dict):
-            raise TypeError("Ожидается словарь в списке 'homeworks'.")
-
-        if "homework_name" not in homework:
-            raise KeyError(
-                "Отсутствует ключ 'homework_name' в словаре 'homework'.")
-
-        if "status" not in homework:
-            raise KeyError("Отсутствует ключ 'status' в словаре 'homework'.")
-
-
-def parse_status(homework):
-    """Извлекает статус работы и возвращает строку для отправки в Telegram."""
-    if not isinstance(homework, dict):
-        raise TypeError("Ожидается словарь в качестве параметра.")
-
-    if "homework_name" not in homework:
-        raise KeyError("Отсутствует ключ 'homework_name' в словаре.")
-
-    if "status" not in homework:
-        raise KeyError("Отсутствует ключ 'status' в словаре.")
-
-    homework_name = homework["homework_name"]
-    homework_status = homework["status"]
-
-    if homework_status not in HOMEWORK_VERDICTS:
-        raise ValueError("Недопустимый статус работы.")
-
-    verdict = HOMEWORK_VERDICTS.get(homework_status, "")
-    return f'Изменился статус проверки работы "{homework_name}": {verdict}'
-
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    filename='bot.log'
-)
+    if not all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
+        logger.critical(
+            "Программа принудительно останавливается при отсутствии "
+            "обязательных переменных окружения.")
+        sys.exit()
 
 
 def main():
@@ -133,12 +73,6 @@ def main():
     check_tokens()
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
-
-    if not all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
-        logging.critical((
-            "Программа принудительно останавливается при отсутствии"
-            "обязательных переменных окружения."))
-        sys.exit()
     while True:
         try:
             response = get_api_answer(timestamp)
@@ -147,17 +81,17 @@ def main():
                 message = parse_status(homework)
                 try:
                     send_message(bot, message)
-                    logging.debug('Успешная отправка сообщения в Telegram')
+                    logger.debug('Успешная отправка сообщения в Telegram')
                 except telegram.error.TelegramError as error:
-                    logging.error(
+                    logger.error(
                         f'Ошибка при отправке сообщения в Telegram: {error}')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             send_message(bot, message)
-            logging.error(message)
+            logger.error(message)
         time.sleep(RETRY_PERIOD)
 
 
 if __name__ == "__main__":
-    logging.info('Начало работы программы')
+    logger.info('Начало работы программы')
     main()
