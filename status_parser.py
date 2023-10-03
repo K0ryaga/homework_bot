@@ -1,8 +1,4 @@
-HOMEWORK_VERDICTS = {
-    'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
-    'reviewing': 'Работа взята на проверку ревьюером.',
-    'rejected': 'Работа проверена: у ревьюера есть замечания.'
-}
+from get_homework_verdcts import HOMEWORK_VERDICTS
 
 
 def validate_homework(homework):

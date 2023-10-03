@@ -1,15 +1,16 @@
 import os
 import time
 import telegram
-import sys
+
 import logging
 from dotenv import load_dotenv
-
+import sys
 
 from api import check_response, get_api_answer
-from status_parser import parse_status, HOMEWORK_VERDICTS
+from status_parser import parse_status
 from message import send_message
-
+from check_tokens import check_tokens
+from get_homework_verdcts import HOMEWORK_VERDICTS
 
 load_dotenv()
 
@@ -24,54 +25,23 @@ url = f'{API_HOST}{ENDPOINT}'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
 HOMEWORK_VERDICTS = HOMEWORK_VERDICTS
-# Эта строчка нужна исключительно для прохождения pytest
-# Он требует чтобы HOMEWORK_VERDICTS был в этом модуле
-# Импортироватть его отсюда нельзя так как будет цикличный импорт
-# Если нужно я могу вернуть parse_status сюда чтобы не было бесполезных строк
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+class Logger:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
 
-file_handler = logging.FileHandler('bot.log')
-file_handler.setLevel(logging.DEBUG)
+        file_handler = logging.FileHandler('bot.log')
+        file_handler.setLevel(logging.DEBUG)
 
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
 
-logger.addHandler(file_handler)
+        self.logger.addHandler(file_handler)
 
 
-def check_tokens():
-    """Проверяет, все ли переменные окружения существуют."""
-    required_variables = [
-        'PRACTICUM_TOKEN',
-        'TELEGRAM_TOKEN',
-        'TELEGRAM_CHAT_ID'
-    ]
-    missing_variables = []
-
-    for variable in required_variables:
-        if not os.getenv(variable):
-            missing_variables.append(variable)
-
-    if missing_variables:
-        missing_variables_str = ', '.join(missing_variables)
-        error_message = (
-            f"Отсутствуют следующие переменные окружения: "
-            f"{missing_variables_str}"
-        )
-        raise ValueError(error_message)
-
-    if not os.getenv('TELEGRAM_CHAT_ID'):
-        raise ValueError(
-            "Переменная окружения TELEGRAM_CHAT_ID не установлена.")
-
-    if not all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]):
-        logger.critical(
-            "Программа принудительно останавливается при отсутствии "
-            "обязательных переменных окружения.")
-        sys.exit()
+logger = Logger()
 
 
 def main():
@@ -87,17 +57,17 @@ def main():
                 message = parse_status(homework)
                 try:
                     send_message(bot, message)
-                    logger.debug('Успешная отправка сообщения в Telegram')
+                    logger.logger.debug('Успешная отправка сообщения в Telegram')
                 except telegram.error.TelegramError as error:
-                    logger.error(
+                    logger.logger.error(
                         f'Ошибка при отправке сообщения в Telegram: {error}')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             send_message(bot, message)
-            logger.error(message)
+            logger.logger.error(message)
         time.sleep(RETRY_PERIOD)
 
 
 if __name__ == "__main__":
-    logger.info('Начало работы программы')
+    logger.logger.info('Начало работы программы')
     main()
