@@ -40,7 +40,8 @@ class Logger:
         file_handler = logging.FileHandler('bot.log')
         file_handler.setLevel(logging.DEBUG)
 
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s')
         file_handler.setFormatter(formatter)
 
         self.logger.addHandler(file_handler)
