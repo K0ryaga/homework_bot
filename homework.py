@@ -35,9 +35,9 @@ class Logger:
     """
 
     def __init__(self):
-        """
-        Инициализирует логгер и настраивает его
-        """
+
+        """Инициализирует логгер и настраивает его"""
+
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
