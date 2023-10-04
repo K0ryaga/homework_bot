@@ -30,10 +30,6 @@ HOMEWORK_VERDICTS = {
 
 
 class Logger:
-    # Настройку логгера нельзя убрать из homework.py
-    # pytest написан так чтобы проверять ее исключительно здесь
-    # мне подтвердили это наставники в пачке(ссылка ниже)
-    # https://app.pachca.com/chats?thread_id=2049929
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
@@ -41,10 +37,15 @@ class Logger:
         file_handler = logging.FileHandler('bot.log')
         file_handler.setLevel(logging.DEBUG)
 
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s')
         file_handler.setFormatter(formatter)
 
         self.logger.addHandler(file_handler)
+    # Настройку логгера нельзя убрать из homework.py
+    # pytest написан так чтобы проверять ее исключительно здесь
+    # мне подтвердили это наставники в пачке(ссылка ниже)
+    # https://app.pachca.com/chats?thread_id=2049929
 
 
 logger = Logger()
