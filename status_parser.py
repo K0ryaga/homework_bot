@@ -1,6 +1,3 @@
-from get_homework_verdcts import HOMEWORK_VERDICTS
-
-
 def validate_homework(homework):
     """Проверяет, что homework является словарем."""
     if not isinstance(homework, dict):
@@ -9,6 +6,7 @@ def validate_homework(homework):
 
 def parse_status(homework):
     """Извлекает статус работы и возвращает строку для отправки в Telegram."""
+    from homework import HOMEWORK_VERDICTS
     validate_homework(homework)
 
     if "homework_name" not in homework:

@@ -4,13 +4,11 @@ import telegram
 
 import logging
 from dotenv import load_dotenv
-import sys
 
 from api import check_response, get_api_answer
 from status_parser import parse_status
 from message import send_message
 from check_tokens import check_tokens
-from get_homework_verdcts import HOMEWORK_VERDICTS
 
 load_dotenv()
 
@@ -24,10 +22,18 @@ ENDPOINT = 'homework_statuses/'
 url = f'{API_HOST}{ENDPOINT}'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
-HOMEWORK_VERDICTS = HOMEWORK_VERDICTS
+HOMEWORK_VERDICTS = {
+    'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
+    'reviewing': 'Работа взята на проверку ревьюером.',
+    'rejected': 'Работа проверена: у ревьюера есть замечания.'
+}
 
 
 class Logger:
+    # Настройку логгера нельзя убрать из homework.py
+    # pytest написан так чтобы проверять ее исключительно здесь
+    # мне подтвердили это наставники в пачке(ссылка ниже)
+    # https://app.pachca.com/chats?thread_id=2049929
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
@@ -46,7 +52,8 @@ logger = Logger()
 
 def main():
     """Основная логика работы программы."""
-    check_tokens()
+    tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
+    check_tokens(tokens)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
     while True:
@@ -57,7 +64,8 @@ def main():
                 message = parse_status(homework)
                 try:
                     send_message(bot, message)
-                    logger.logger.debug('Успешная отправка сообщения в Telegram')
+                    logger.logger.debug(
+                        'Успешная отправка сообщения в Telegram')
                 except telegram.error.TelegramError as error:
                     logger.logger.error(
                         f'Ошибка при отправке сообщения в Telegram: {error}')
