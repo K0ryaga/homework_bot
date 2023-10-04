@@ -30,8 +30,8 @@ HOMEWORK_VERDICTS = {
 
 
 class Logger:
+    """Инициализирует класс и настраивает логгер"""
     def __init__(self):
-        """Инициализирует класс и настраивает логгер"""
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
