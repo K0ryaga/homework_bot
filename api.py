@@ -1,19 +1,10 @@
 import requests
 import http
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
-API_HOST = 'https://practicum.yandex.ru/api/user_api/'
-ENDPOINT = 'homework_statuses/'
-url = f'{API_HOST}{ENDPOINT}'
-HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
 
 def get_api_answer(timestamp):
     """Делает запрос к API-сервису и возвращает ответ."""
+    from homework import PRACTICUM_TOKEN, url
     headers = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
     params = {'from_date': timestamp}
 

@@ -1,7 +1,5 @@
-import os
 import time
 import telegram
-
 import logging
 from dotenv import load_dotenv
 
@@ -9,12 +7,8 @@ from api import check_response, get_api_answer
 from status_parser import parse_status
 from message import send_message
 from check_tokens import check_tokens
+from tokens_config import PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 
-load_dotenv()
-
-PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 RETRY_PERIOD = 600
 API_HOST = 'https://practicum.yandex.ru/api/user_api/'
@@ -27,6 +21,8 @@ HOMEWORK_VERDICTS = {
     'reviewing': 'Работа взята на проверку ревьюером.',
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
+
+load_dotenv()
 
 
 class Logger:
@@ -45,11 +41,6 @@ class Logger:
         file_handler.setFormatter(formatter)
 
         self.logger.addHandler(file_handler)
-
-# Настройку логгера нельзя убрать из homework.py
-# pytest написан так чтобы проверять ее исключительно здесь
-# мне подтвердили это наставники в пачке(ссылка ниже)
-# https://app.pachca.com/chats?thread_id=2049929
 
 
 logger = Logger()
