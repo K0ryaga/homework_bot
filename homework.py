@@ -8,13 +8,8 @@ from status_parser import parse_status
 from message import send_message
 from check_tokens import check_tokens
 from tokens_config import PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
+from api_config import RETRY_PERIOD, API_HOST, ENDPOINT, HEADERS
 
-
-RETRY_PERIOD = 600
-API_HOST = 'https://practicum.yandex.ru/api/user_api/'
-ENDPOINT = 'homework_statuses/'
-url = f'{API_HOST}{ENDPOINT}'
-HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
 HOMEWORK_VERDICTS = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
@@ -52,9 +47,11 @@ def main():
     check_tokens(tokens)
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
+    url = f'{API_HOST}{ENDPOINT}'
+    api_argument = url, HEADERS, timestamp
     while True:
         try:
-            response = get_api_answer(timestamp)
+            response = get_api_answer(api_argument)
             check_response(response)
             for homework in response["homeworks"]:
                 message = parse_status(homework)

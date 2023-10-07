@@ -2,14 +2,14 @@ import requests
 import http
 
 
-def get_api_answer(timestamp):
+def get_api_answer(api_argument):
     """Делает запрос к API-сервису и возвращает ответ."""
-    from homework import PRACTICUM_TOKEN, url
-    headers = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
-    params = {'from_date': timestamp}
+    url = api_argument
+    params = {'from_date': api_argument}
+    headers = api_argument
 
     try:
-        response = requests.get(url, headers=headers, params=params)
+        response = requests.get(url=url, headers=headers, params=params)
         response.raise_for_status()
         if response.status_code != http.HTTPStatus.OK:
             raise ValueError(
