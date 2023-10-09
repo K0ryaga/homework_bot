@@ -10,14 +10,22 @@ from check_tokens import check_tokens
 from tokens_config import PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 from api_config import RETRY_PERIOD, API_HOST, ENDPOINT, HEADERS
 
+load_dotenv()
+
 
 HOMEWORK_VERDICTS = {
     'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
     'reviewing': 'Работа взята на проверку ревьюером.',
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
-
-load_dotenv()
+# Мне не удалось перенести константу и при этом использовать ее здесь.
+# Единственное что придумал - передать ее в качестве аргумената в main()
+# как в tokens в api_argument, не вышло. Когда я предавал ее в parse_status
+# то часть проверяющая есть ли такой статус в константе не работала.
+# Исправить не смог, написал в пачку, по итогу сказали написать вам.
+# https://app.pachca.com/chats?thread_id=2080459
+# Так что либо расскажите как ее можно использовать, либо сделайте исключение
+# как в случае с логгером ниже
 
 
 class Logger:
