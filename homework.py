@@ -4,26 +4,13 @@ import logging
 from dotenv import load_dotenv
 
 from api import check_response, get_api_answer
-from status_parser import parse_status
 from message import send_message
 from check_tokens import check_tokens
 from tokens_config import PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 from api_config import RETRY_PERIOD, API_HOST, ENDPOINT, HEADERS
+from verdicts import HOMEWORK_VERDICTS
 
 load_dotenv()
-
-
-HOMEWORK_VERDICTS = {
-    'approved': 'Работа проверена: ревьюеру всё понравилось. Ура!',
-    'reviewing': 'Работа взята на проверку ревьюером.',
-    'rejected': 'Работа проверена: у ревьюера есть замечания.'
-}
-# За время этого проекта вы доказали мне свою некомпетентность
-# Я уже обратился к руководству и мне назначили другого ревьюера
-# К сожелению со следуещего проекта, так что сделайте последнее одолжение
-# Примите работу в которой уже НЕЧЕГО дополнять и изменять
-# Не усложняйте себе и мне жизнь ибо при отказе я вновь обращусь к руководству
-# Досвидания, надеюсь больше мне с вами работать никогда не придется
 
 
 class Logger:
@@ -45,6 +32,32 @@ class Logger:
 
 
 logger = Logger()
+
+
+def validate_homework(homework):
+    """Проверяет, что homework является словарем."""
+    if not isinstance(homework, dict):
+        raise TypeError("Ожидается словарь в качестве параметра.")
+
+
+def parse_status(homework):
+    """Извлекает статус работы и возвращает строку для отправки в Telegram."""
+    validate_homework(homework)
+
+    if "homework_name" not in homework:
+        raise KeyError("Отсутствует ключ 'homework_name' в словаре.")
+
+    if "status" not in homework:
+        raise KeyError("Отсутствует ключ 'status' в словаре.")
+
+    homework_name = homework["homework_name"]
+    homework_status = homework["status"]
+
+    if homework_status not in HOMEWORK_VERDICTS:
+        raise ValueError("Недопустимый статус работы.")
+
+    verdict = HOMEWORK_VERDICTS.get(homework_status, "")
+    return f'Изменился статус проверки работы "{homework_name}": {verdict}'
 
 
 def main():
